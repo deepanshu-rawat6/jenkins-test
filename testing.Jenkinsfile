@@ -7,9 +7,14 @@ pipeline {
                 echo 'Checking out code..'
             }
         }
-        stage ('Build') {
+        stage('Build-1') {
             steps {
-                echo 'Building..'
+                sh 'cat test-1/README.md'
+            }
+        }
+        stage ('Build-2') {
+            steps {
+                sh 'cat test-2/README.md'
             }
         }
     }
