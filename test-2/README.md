@@ -1,3 +1,3 @@
 # jenkins-test
 
-Testing for polling, by including only directory 2
+Testing for polling, by including only test-2
