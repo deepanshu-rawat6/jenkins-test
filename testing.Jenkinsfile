@@ -1,26 +1,46 @@
+def hasChangesInFolder(String folderPath) {
+    def previousCommit = sh(script: "git rev-parse HEAD@{1}", returnStdout: true).trim()
+    def currentCommit = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+    
+    def changes = sh(
+        script: "git diff --name-only ${previousCommit} ${currentCommit} | grep '^${folderPath}/' || true",
+        returnStdout: true
+    ).trim()
+    
+    return changes != ''
+}
+
 pipeline {
     agent any 
+
+    triggers {
+        cron('* * * * *') // Hourly trigger
+    }
 
     stages {
         stage('Checkout') {
             steps {
-                echo 'Checking out code..'
+                git url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo.git'
             }
         }
-        stage('Build-1') {
+        
+        stage('Job 1 - Folder 1') {
             when {
-                changeset "**/test-1/*.*"
+                expression { hasChangesInFolder('test-1') }
             }
             steps {
-                sh 'cat test-1/README.md'
+                echo "Running Job 1 for Folder 1 changes"
+                // Your job 1 steps
             }
         }
-        stage ('Build-2') {
+        
+        stage('Job 2 - Folder 2') {
             when {
-                changeset "**/test-2/*.*"
+                expression { hasChangesInFolder('test-2') }
             }
             steps {
-                sh 'cat test-2/README.md'
+                echo "Running Job 2 for Folder 2 changes"
+                // Your job 2 steps
             }
         }
     }
