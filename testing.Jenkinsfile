@@ -1,38 +1,43 @@
 pipeline {
     agent any
-
     triggers {
-        // Poll SCM every minute
-        pollSCM('* * * * *')
+        pollSCM('H * * * *')
     }
-
     stages {
-        stage('Checkout Specific Folder') {
+        stage('Checkout') {
             steps {
-                // This ensures only changes in folder1 will trigger 
-                // (adjust includedRegions for job1 vs. job2)
                 checkout([
                     $class: 'GitSCM',
-                    branches: [[name: '*/master']],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo.git'
-                    ]],
+                    branches: [[name: '*/main']],
+                    doGenerateSubmoduleConfigurations: false,
                     extensions: [
-                        [$class: 'PathRestriction',
-                        includedRegions: 'test-1/.*', 
-                        excludedRegions: 'test-2/.*']
-                    ]
+                        [$class: 'PathRestriction', includedRegions: 'ServiceA/.*']
+                    ],
+                    userRemoteConfigs: [[
+                        credentialsId: 'your-git-creds',
+                        url: 'git@github.com:your-org/repo1.git'
+                    ]]
                 ])
             }
         }
-        stage('Build/Deploy') {
+        stage('Check Changes in ServiceA Folder') {
             steps {
-                // Run build for the code in folder1
-                sh """
-                  cd test-1
-                  ls -l
-                  # ... your build steps for service A
-                """
+                script {
+                    sh 'git fetch --all' // ensure local is updated
+                    def changes = sh(returnStdout: true, script: 'git diff --name-only origin/main HEAD -- test-1/').trim()
+                    if (!changes) {
+                        // No changes in ServiceA folder
+                        echo "No changes in test-1 folder, skipping build."
+                        currentBuild.result = 'NOT_BUILT'
+                        error("Stopping the pipeline.")
+                    }
+                }
+            }
+        }
+        stage('Build Service A') {
+            steps {
+                echo "Building Service A..."
+                // build steps
             }
         }
     }
