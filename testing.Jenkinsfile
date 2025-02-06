@@ -33,6 +33,9 @@ pipeline {
             }
         }
         stage('Build/Deploy') {
+            when {
+                changeset "jenkins-test-repo/test-1"
+            }
             steps {
                 // Run build for the code in folder1
                 sh """
