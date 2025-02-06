@@ -30,6 +30,7 @@ pipeline {
             }
             steps {
                 echo "Running Job 1 for Folder 1 changes"
+                sh 'cat test-1/README.md'
                 // Your job 1 steps
             }
         }
@@ -40,6 +41,7 @@ pipeline {
             }
             steps {
                 echo "Running Job 2 for Folder 2 changes"
+                sh 'cat test-2/README.md'
                 // Your job 2 steps
             }
         }
