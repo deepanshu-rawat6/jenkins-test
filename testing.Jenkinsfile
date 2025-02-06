@@ -8,15 +8,14 @@ pipeline {
             steps {
                 checkout([
                     $class: 'GitSCM',
-                    branches: [[name: '*/main']],
+                    branches: [[name: '*/master']],
                     doGenerateSubmoduleConfigurations: false,
                     extensions: [
-                        [$class: 'PathRestriction', includedRegions: 'ServiceA/.*']
+                        [$class: 'PathRestriction', includedRegions: 'test-1/.*']
                     ],
                     userRemoteConfigs: [[
-                        credentialsId: 'your-git-creds',
-                        url: 'git@github.com:your-org/repo1.git'
-                    ]]
+                        url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo.git'
+                    ]],
                 ])
             }
         }
