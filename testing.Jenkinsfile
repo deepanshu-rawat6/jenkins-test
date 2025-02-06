@@ -1,8 +1,12 @@
 import groovy.json.JsonSlurper
+import java.text.SimpleDateFormat
 
+// Function to check folder changes
 def checkFolderChanges(String folderPath) {
     def owner = 'deepanshu-rawat6'
     def repo = 'jenkins-test-repo'
+    def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+    dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
     
     withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'TOKEN')]) {
         def response = httpRequest(
@@ -15,7 +19,7 @@ def checkFolderChanges(String folderPath) {
         def lastBuildTime = currentBuild.previousBuild?.timeInMillis ?: 0
 
         for (commit in commits) {
-            def commitTime = Date.parse("yyyy-MM-dd'T'HH:mm:ss'Z'", commit.commit.author.date).time
+            def commitTime = dateFormat.parse(commit.commit.author.date).time
             if (commitTime > lastBuildTime) {
                 def changedFiles = httpRequest(
                     url: commit.url,
