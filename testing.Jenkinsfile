@@ -3,7 +3,6 @@ def checkFolderChanges(String folderPath) {
     def repo = 'jenkins-test-repo'
     
     withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'TOKEN')]) {
-        // Use curl to get commits
         def response = sh(
             script: """
                 curl -s -H "Authorization: token ${TOKEN}" \
@@ -18,7 +17,6 @@ def checkFolderChanges(String folderPath) {
         for (commit in commits) {
             def commitTime = Date.parse("yyyy-MM-dd'T'HH:mm:ss'Z'", commit.commit.author.date).time
             if (commitTime > lastBuildTime) {
-                // Get commit details
                 def changedFiles = sh(
                     script: """
                         curl -s -H "Authorization: token ${TOKEN}" \
@@ -40,14 +38,21 @@ pipeline {
     agent any
     
     triggers {
-        cron('H * * * *') // Hourly trigger
+        cron('H * * * *')
     }
     
     stages {
         stage('Checkout') {
             steps {
                 script {
-                    sh 'git clone https://github.com/deepanshu-rawat6/jenkins-test-repo.git'
+                    // Clean up existing directory if it exists
+                    sh '''
+                        if [ -d "jenkins-test-repo" ]; then
+                            rm -rf jenkins-test-repo
+                        fi
+                        git clone https://github.com/deepanshu-rawat6/jenkins-test-repo.git
+                    '''
+                    
                     env.FOLDER1_CHANGED = checkFolderChanges('test-1').toString()
                     env.FOLDER2_CHANGED = checkFolderChanges('test-2').toString()
                 }
@@ -60,8 +65,7 @@ pipeline {
             }
             steps {
                 echo "Running Job 1 for Folder 1 changes"
-                sh 'cat test-1/README.md'
-                // Your job 1 steps
+                sh 'cat jenkins-test-repo/test-1/README.md'
             }
         }
         
@@ -71,8 +75,7 @@ pipeline {
             }
             steps {
                 echo "Running Job 2 for Folder 2 changes"
-                sh 'cat test-2/README.md'
-                // Your job 2 steps
+                sh 'cat jenkins-test-repo/test-2/README.md'
             }
         }
     }
