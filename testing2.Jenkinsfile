@@ -1,38 +1,33 @@
 pipeline {
     agent any
-
+    
+    // 1) Use Poll SCM to check for changes in octo every X minutes/hours
     triggers {
-        // Poll SCM every minute
-        pollSCM('* * * * *')
+        pollSCM('* * * * *')   // e.g. every hour
     }
-
+    
     stages {
-        stage('Checkout Specific Folder') {
+        stage('Checkout Correlation Code') {
             steps {
-                // This ensures only changes in folder1 will trigger 
-                // (adjust includedRegions for job1 vs. job2)
+                // 2) We point to 'octo' Git repo (Repo-A), not Repo-B
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: '*/master']],
                     userRemoteConfigs: [[
-                        url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo.git'
+                        url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo'
                     ]],
                     extensions: [
-                        [$class: 'PathRestriction',
-                        includedRegions: 'test-2/.*', 
-                        excludedRegions: 'test-1/.*']
+                        [$class: 'PathRestriction', includedRegions: 'test-2/.*', excludedRegions: '']
                     ]
                 ])
             }
         }
-        stage('Build/Deploy') {
+        
+        stage('Build & Push Image') {
             steps {
-                // Run build for the code in folder1
-                sh """
-                  cd test-2
-                  ls -l
-                  # ... your build steps for service A
-                """
+                // This stage runs only if there's a change in the Correlation folder
+                echo "Building and pushing Docker image for Correlation..."
+                // Build steps here...
             }
         }
     }
