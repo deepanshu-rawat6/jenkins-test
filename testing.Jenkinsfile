@@ -1,17 +1,15 @@
 def checkFolderChanges(String folderPath) {
     def owner = 'deepanshu-rawat6'
     def repo = 'jenkins-test-repo'
-    
     withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'TOKEN')]) {
         def response = httpRequest(
             url: "https://api.github.com/repos/${owner}/${repo}/commits",
             headers: [[name: 'Authorization', value: "token ${TOKEN}"]],
             validResponseCodes: '200'
         )
-
         def commits = readJSON text: response.content
         def lastBuildTime = currentBuild.previousBuild?.timeInMillis ?: 0
-
+        
         for (commit in commits) {
             def commitTime = Date.parse("yyyy-MM-dd'T'HH:mm:ss'Z'", commit.commit.author.date).time
             if (commitTime > lastBuildTime) {
@@ -21,7 +19,6 @@ def checkFolderChanges(String folderPath) {
                     validResponseCodes: '200'
                 )
                 def commitData = readJSON text: changedFiles.content
-
                 if (commitData.files.any { it.filename.startsWith(folderPath) }) {
                     return true
                 }
@@ -32,19 +29,21 @@ def checkFolderChanges(String folderPath) {
 }
 
 pipeline {
-    agent any 
-
+    agent any
+    
     triggers {
-        cron('* * * * *') // Hourly trigger
+        cron('H * * * *') // Fixed cron syntax for hourly trigger
     }
-
+    
     stages {
         stage('Checkout') {
-            script {
+            steps {
+                script {
                     sh 'git clone https://github.com/deepanshu-rawat6/jenkins-test-repo.git'
                     env.FOLDER1_CHANGED = checkFolderChanges('test-1').toString()
                     env.FOLDER2_CHANGED = checkFolderChanges('test-2').toString()
                 }
+            }
         }
         
         stage('Job 1 - Folder 1') {
