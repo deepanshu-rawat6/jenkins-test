@@ -14,7 +14,7 @@ pipeline {
                     script {
                             properties([pipelineTriggers([pollSCM('H * * * *')])])
                         }
-                        git branch: master, url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo'
+                        git branch: 'master', url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo'
                 }
                 // This ensures only changes in folder1 will trigger 
                 // (adjust includedRegions for job1 vs. job2)
