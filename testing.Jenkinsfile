@@ -3,28 +3,23 @@ def checkFolderChanges(String folderPath) {
     def repo = 'jenkins-test-repo'
     
     withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'TOKEN')]) {
-        def response = sh(
-            script: """
-                curl -s -H "Authorization: token ${TOKEN}" \
-                https://api.github.com/repos/${owner}/${repo}/commits
-            """,
-            returnStdout: true
+        def response = httpRequest(
+            url: "https://api.github.com/repos/${owner}/${repo}/commits",
+            headers: [[name: 'Authorization', value: "token ${TOKEN}"]],
+            validResponseCodes: '200'
         )
-        
-        def commits = readJSON text: response
+        def commits = readJSON text: response.content
         def lastBuildTime = currentBuild.previousBuild?.timeInMillis ?: 0
         
         for (commit in commits) {
             def commitTime = Date.parse("yyyy-MM-dd'T'HH:mm:ss'Z'", commit.commit.author.date).time
             if (commitTime > lastBuildTime) {
-                def changedFiles = sh(
-                    script: """
-                        curl -s -H "Authorization: token ${TOKEN}" \
-                        ${commit.url}
-                    """,
-                    returnStdout: true
+                def commitDetails = httpRequest(
+                    url: commit.url,
+                    headers: [[name: 'Authorization', value: "token ${TOKEN}"]],
+                    validResponseCodes: '200'
                 )
-                def commitData = readJSON text: changedFiles
+                def commitData = readJSON text: commitDetails.content
                 if (commitData.files.any { it.filename.startsWith(folderPath) }) {
                     return true
                 }
@@ -38,25 +33,24 @@ pipeline {
     agent any
     
     triggers {
-        cron('H * * * *')
+        cron('H * * * *') // Run hourly
     }
     
     stages {
         stage('Checkout') {
             steps {
                 script {
-                    // Clean approach: Remove and clone fresh
+                    // Ensure a clean workspace
                     sh '''
                         if [ -d "jenkins-test-repo" ]; then
                             rm -rf jenkins-test-repo
                         fi
                         git clone https://github.com/deepanshu-rawat6/jenkins-test-repo.git
                         cd jenkins-test-repo
-                        # Get the default branch name
-                        DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
+                        DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')
                         git checkout $DEFAULT_BRANCH
                     '''
-                    
+
                     env.FOLDER1_CHANGED = checkFolderChanges('test-1').toString()
                     env.FOLDER2_CHANGED = checkFolderChanges('test-2').toString()
                 }
