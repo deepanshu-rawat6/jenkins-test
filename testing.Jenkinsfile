@@ -1,42 +1,45 @@
 pipeline {
     agent any
+
     triggers {
-        pollSCM('H * * * *')
+        // Poll SCM every
+        pollSCM('* * * * *')
     }
+
     stages {
-        stage('Checkout') {
+        stage('Checkout Specific Folder') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/master']],
-                    doGenerateSubmoduleConfigurations: false,
-                    extensions: [
-                        [$class: 'PathRestriction', includedRegions: 'test-1/.*']
-                    ],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo.git'
-                    ]],
-                ])
-            }
-        }
-        stage('Check Changes in ServiceA Folder') {
-            steps {
-                script {
-                    sh 'git fetch --all' // ensure local is updated
-                    def changes = sh(returnStdout: true, script: 'git diff --name-only origin/master HEAD -- test-1/').trim()
-                    if (!changes) {
-                        // No changes in ServiceA folder
-                        echo "No changes in test-1 folder, skipping build."
-                        currentBuild.result = 'NOT_BUILT'
-                        error("Stopping the pipeline.")
-                    }
+
+                dir('Repo-1') {
+                    script {
+                            properties([pipelineTriggers([pollSCM('H * * * *')])])
+                        }
+                        git branch: master, url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo'
                 }
+                // This ensures only changes in folder1 will trigger 
+                // (adjust includedRegions for job1 vs. job2)
+                // checkout([
+                //     $class: 'GitSCM',
+                //     branches: [[name: '*/master']],
+                //     userRemoteConfigs: [[
+                //         url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo.git'
+                //     ]],
+                //     extensions: [
+                //         [$class: 'PathRestriction',
+                //         includedRegions: 'test-1/.*', 
+                //         excludedRegions: 'test-2/.*']
+                //     ]
+                // ])
             }
         }
-        stage('Build Service A') {
+        stage('Build/Deploy') {
             steps {
-                echo "Building Service A..."
-                // build steps
+                // Run build for the code in folder1
+                sh """
+                  cd test-1
+                  ls -l
+                  # ... your build steps for service A
+                """
             }
         }
     }
