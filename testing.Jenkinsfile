@@ -1,13 +1,34 @@
-def hasChangesInFolder(String folderPath) {
-    def previousCommit = sh(script: "git rev-parse HEAD@{1}", returnStdout: true).trim()
-    def currentCommit = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+def checkFolderChanges(String folderPath) {
+    def owner = 'deepanshu-rawat6'
+    def repo = 'jenkins-test-repo'
     
-    def changes = sh(
-        script: "git diff --name-only ${previousCommit} ${currentCommit} | grep '^${folderPath}/' || true",
-        returnStdout: true
-    ).trim()
-    
-    return changes != ''
+    withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'TOKEN')]) {
+        def response = httpRequest(
+            url: "https://api.github.com/repos/${owner}/${repo}/commits",
+            headers: [[name: 'Authorization', value: "token ${TOKEN}"]],
+            validResponseCodes: '200'
+        )
+
+        def commits = readJSON text: response.content
+        def lastBuildTime = currentBuild.previousBuild?.timeInMillis ?: 0
+
+        for (commit in commits) {
+            def commitTime = Date.parse("yyyy-MM-dd'T'HH:mm:ss'Z'", commit.commit.author.date).time
+            if (commitTime > lastBuildTime) {
+                def changedFiles = httpRequest(
+                    url: commit.url,
+                    headers: [[name: 'Authorization', value: "token ${TOKEN}"]],
+                    validResponseCodes: '200'
+                )
+                def commitData = readJSON text: changedFiles.content
+
+                if (commitData.files.any { it.filename.startsWith(folderPath) }) {
+                    return true
+                }
+            }
+        }
+    }
+    return false
 }
 
 pipeline {
@@ -22,11 +43,15 @@ pipeline {
             steps {
                 git url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo.git'
             }
+            script {
+                    env.FOLDER1_CHANGED = checkFolderChanges('test-1').toString()
+                    env.FOLDER2_CHANGED = checkFolderChanges('test-2').toString()
+                }
         }
         
         stage('Job 1 - Folder 1') {
             when {
-                expression { hasChangesInFolder('test-1') }
+                expression { return env.FOLDER1_CHANGED == 'true' }
             }
             steps {
                 echo "Running Job 1 for Folder 1 changes"
@@ -37,7 +62,7 @@ pipeline {
         
         stage('Job 2 - Folder 2') {
             when {
-                expression { hasChangesInFolder('test-2') }
+                expression { return env.FOLDER2_CHANGED == 'true' }
             }
             steps {
                 echo "Running Job 2 for Folder 2 changes"
