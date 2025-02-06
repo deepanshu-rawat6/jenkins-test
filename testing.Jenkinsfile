@@ -40,9 +40,9 @@ def checkFolderChanges(String folderPath) {
 pipeline {
     agent any
     
-    triggers {
-        cron('* * * * *') // Run every hour
-    }
+    // triggers {
+    //     cron('* * * * *') // Run every hour
+    // }
     
     stages {
         stage('Checkout') {
