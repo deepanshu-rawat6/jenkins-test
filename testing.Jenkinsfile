@@ -40,10 +40,8 @@ pipeline {
 
     stages {
         stage('Checkout') {
-            steps {
-                git url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo.git'
-            }
             script {
+                    sh 'git clone https://github.com/deepanshu-rawat6/jenkins-test-repo.git'
                     env.FOLDER1_CHANGED = checkFolderChanges('test-1').toString()
                     env.FOLDER2_CHANGED = checkFolderChanges('test-2').toString()
                 }
