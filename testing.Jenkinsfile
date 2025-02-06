@@ -23,7 +23,7 @@ pipeline {
             steps {
                 script {
                     sh 'git fetch --all' // ensure local is updated
-                    def changes = sh(returnStdout: true, script: 'git diff --name-only origin/main HEAD -- test-1/').trim()
+                    def changes = sh(returnStdout: true, script: 'git diff --name-only origin/master HEAD -- test-1/').trim()
                     if (!changes) {
                         // No changes in ServiceA folder
                         echo "No changes in test-1 folder, skipping build."
