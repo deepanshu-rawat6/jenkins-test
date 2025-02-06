@@ -1,24 +1,32 @@
 def checkFolderChanges(String folderPath) {
     def owner = 'deepanshu-rawat6'
     def repo = 'jenkins-test-repo'
+    
     withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'TOKEN')]) {
-        def response = httpRequest(
-            url: "https://api.github.com/repos/${owner}/${repo}/commits",
-            headers: [[name: 'Authorization', value: "token ${TOKEN}"]],
-            validResponseCodes: '200'
+        // Use curl to get commits
+        def response = sh(
+            script: """
+                curl -s -H "Authorization: token ${TOKEN}" \
+                https://api.github.com/repos/${owner}/${repo}/commits
+            """,
+            returnStdout: true
         )
-        def commits = readJSON text: response.content
+        
+        def commits = readJSON text: response
         def lastBuildTime = currentBuild.previousBuild?.timeInMillis ?: 0
         
         for (commit in commits) {
             def commitTime = Date.parse("yyyy-MM-dd'T'HH:mm:ss'Z'", commit.commit.author.date).time
             if (commitTime > lastBuildTime) {
-                def changedFiles = httpRequest(
-                    url: commit.url,
-                    headers: [[name: 'Authorization', value: "token ${TOKEN}"]],
-                    validResponseCodes: '200'
+                // Get commit details
+                def changedFiles = sh(
+                    script: """
+                        curl -s -H "Authorization: token ${TOKEN}" \
+                        ${commit.url}
+                    """,
+                    returnStdout: true
                 )
-                def commitData = readJSON text: changedFiles.content
+                def commitData = readJSON text: changedFiles
                 if (commitData.files.any { it.filename.startsWith(folderPath) }) {
                     return true
                 }
@@ -32,7 +40,7 @@ pipeline {
     agent any
     
     triggers {
-        cron('H * * * *') // Fixed cron syntax for hourly trigger
+        cron('H * * * *') // Hourly trigger
     }
     
     stages {
