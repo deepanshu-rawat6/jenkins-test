@@ -9,7 +9,7 @@ pipeline {
     triggers {
         // Poll only for changes in the Classification folder (if supported by your Jenkins setup)
         pollSCM(
-            scmPollSpec: 'H * * * *',
+            scmpoll_spec: 'H * * * *',
             extensions: [[$class: 'PathRestriction', includedRegions: 'test-2/.*']]
         )
     }
