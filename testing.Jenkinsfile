@@ -2,9 +2,9 @@ pipeline {
     agent any
     
     // 1) Use Poll SCM to check for changes in octo every X minutes/hours
-    triggers {
-        pollSCM('* * * * *')   // e.g. every hour
-    }
+    // triggers {
+    //     pollSCM('* * * * *')   // e.g. every hour
+    // }
     
     stages {
         stage('Checkout Correlation Code') {
