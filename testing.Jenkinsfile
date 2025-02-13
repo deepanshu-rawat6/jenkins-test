@@ -5,14 +5,6 @@ pipeline {
     // triggers {
     //     pollSCM('* * * * *')   // e.g. every hour
     // }
-
-    triggers {
-        // Poll only for changes in the Classification folder (if supported by your Jenkins setup)
-        pollSCM(
-            scmpoll_spec: 'H * * * *',
-            extensions: [[$class: 'PathRestriction', includedRegions: 'test-1/.*']]
-        )
-    }
     
     stages {
         stage('Checkout Correlation Code') {
@@ -31,20 +23,6 @@ pipeline {
                 // ])
 
 
-                        // dir('test-1'){
-                        //     script {
-                        //         properties([pipelineTriggers([pollSCM('* * * * *')])])
-                        //     }
-                        //     checkout([
-                        //         $class: 'GitSCM',
-                        //         branches: [[name: '*/master']],
-                        //         doGenerateSubmoduleConfigurations: false,
-                        //         extensions: [
-                        //             [$class: 'PathRestriction', includedRegions: 'test-1/.*', excludedRegions: '']
-                        //         ],
-                        //         userRemoteConfigs: [[url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo']]
-                        //     ])
-                        // }
                         dir('test-1'){
                             script {
                                 properties([pipelineTriggers([pollSCM('* * * * *')])])
@@ -53,6 +31,9 @@ pipeline {
                                 $class: 'GitSCM',
                                 branches: [[name: '*/master']],
                                 doGenerateSubmoduleConfigurations: false,
+                                extensions: [
+                                    [$class: 'PathRestriction', includedRegions: 'test-1/.*', excludedRegions: '']
+                                ],
                                 userRemoteConfigs: [[url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo']]
                             ])
                         }
