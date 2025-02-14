@@ -45,7 +45,6 @@ pipeline {
                 // This stage runs only if there's a change in the Correlation folder
                 sh '''
                     echo "Building and pushing Docker image for Correlation..."
-                    ls .. -la
                     pwd
                     ls -la
                     cd test-1
