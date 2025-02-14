@@ -44,7 +44,7 @@ pipeline {
                                 $class: 'GitSCM',
                                 branches: [[name: '*/master']],
                                 doGenerateSubmoduleConfigurations: false,
-                                extensions: [[$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'test-2/*']]]]
+                                extensions: [[$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'test-2/*']]]],
                                 userRemoteConfigs: [[url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo']]
                             ])
                         }
