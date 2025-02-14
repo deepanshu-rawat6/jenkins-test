@@ -21,21 +21,6 @@ pipeline {
                 //     ]
                 // ])
 
-                        // dir('test-2'){
-                        //     script {
-                        //         properties([pipelineTriggers([pollSCM('* * * * *')])])
-                        //     }
-                        //     checkout([
-                        //         $class: 'GitSCM',
-                        //         branches: [[name: '*/master']],
-                        //         doGenerateSubmoduleConfigurations: false,
-                        //         extensions: [
-                        //             [$class: 'PathRestriction', includedRegions: 'test-2/.*', excludedRegions: '']
-                        //         ],
-                        //         userRemoteConfigs: [[url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo']]
-                        //     ])
-                        // }
-
                         dir('test-2'){
                             script {
                                 properties([pipelineTriggers([pollSCM('* * * * *')])])
@@ -44,10 +29,13 @@ pipeline {
                                 $class: 'GitSCM',
                                 branches: [[name: '*/master']],
                                 doGenerateSubmoduleConfigurations: false,
-                                extensions: [[$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'test-2/*']]]],
+                                extensions: [
+                                    [$class: 'PathRestriction', includedRegions: 'test-2/.*', excludedRegions: '']
+                                ],
                                 userRemoteConfigs: [[url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo']]
                             ])
                         }
+
             }
         }
         
