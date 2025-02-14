@@ -45,6 +45,7 @@ pipeline {
                 sh '''
                     echo "Building and pushing Docker image for Correlation..."
                     pwd
+                    ls -la
                 '''
                 // Build steps here...
             }
