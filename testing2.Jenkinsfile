@@ -42,7 +42,10 @@ pipeline {
         stage('Build & Push Image') {
             steps {
                 // This stage runs only if there's a change in the Correlation folder
-                echo "Building and pushing Docker image for Correlation..."
+                sh '''
+                    echo "Building and pushing Docker image for Correlation..."
+                    pwd
+                '''
                 // Build steps here...
             }
         }
