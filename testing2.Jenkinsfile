@@ -6,97 +6,45 @@ pipeline {
     //     pollSCM('* * * * *')   // e.g. every hour
     // }
 
-    triggers {
-        cron('* * * * *')  // Runs every minute
-    }
+    // triggers {
+    //     cron('* * * * *')  // Runs every minute
+    // }
     
     stages {
-        // stage('Checkout Correlation Code') {
-        //     steps {
-        //         // 2) We point to 'octo' Git repo (Repo-A), not Repo-B
-        //         // checkout([
-        //         //     $class: 'GitSCM',
-        //         //     branches: [[name: '*/master']],
-        //         //     userRemoteConfigs: [[
-        //         //         url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo'
-        //         //     ]],
-        //         //     extensions: [
-        //         //         [$class: 'PathRestriction', includedRegions: 'test-2/.*', excludedRegions: '']
-        //         //     ]
-        //         // ])
-
-        //                 dir('test-2'){
-        //                     script {
-        //                         properties([pipelineTriggers([pollSCM('* * * * *')])])
-        //                     }
-        //                     checkout([
-        //                         $class: 'GitSCM',
-        //                         branches: [[name: '*/master']],
-        //                         doGenerateSubmoduleConfigurations: false,
-        //                         extensions: [
-        //                             [$class: 'PathRestriction', includedRegions: 'test-2/.*', excludedRegions: '']
-        //                         ],
-        //                         userRemoteConfigs: [[url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo']]
-        //                     ])
-        //                 }
-
-        //     }
-        // }
-
-        stage('Check for Changes in test Repo') {
+        stage('Checkout Correlation Code') {
             steps {
-                script {
-                    def repoUrl = "https://github.com/deepanshu-rawat6/jenkins-test-repo"
-                    def branch = "master"
-                    def targetDirectory = "test-2"
+                // 2) We point to 'octo' Git repo (Repo-A), not Repo-B
+                // checkout([
+                //     $class: 'GitSCM',
+                //     branches: [[name: '*/master']],
+                //     userRemoteConfigs: [[
+                //         url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo'
+                //     ]],
+                //     extensions: [
+                //         [$class: 'PathRestriction', includedRegions: 'test-2/.*', excludedRegions: '']
+                //     ]
+                // ])
 
-                    sh """
-                        rm -rf ${targetDirectory}
-                        git clone --depth=1 --branch ${branch} ${repoUrl} ${targetDirectory}
-                        cd ${targetDirectory}
-                        git fetch origin ${branch}
-                        
-                        if git diff --name-only HEAD@{1} HEAD | grep '^test-2/' > /dev/null; then
-                            echo "Changes detected in test-2/, proceeding with build."
-                            echo "CHANGES_FOUND=true" >> \$WORKSPACE/build.env
-                        else
-                            echo "No changes in test-2/, skipping build."
-                            echo "CHANGES_FOUND=false" >> \$WORKSPACE/build.env
-                        fi
-                    """
-                }
+                        dir('test-2'){
+                            script {
+                                properties([pipelineTriggers([pollSCM('* * * * *')])])
+                            }
+                            checkout([
+                                $class: 'GitSCM',
+                                branches: [[name: '*/master']],
+                                doGenerateSubmoduleConfigurations: false,
+                                extensions: [
+                                    [$class: 'PathRestriction', includedRegions: 'test-2/.*', excludedRegions: '']
+                                ],
+                                userRemoteConfigs: [[url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo']]
+                            ])
+                        }
+
             }
         }
 
-        stage('Clone test Repo') {
-            when {
-                expression {
-                    def buildEnv = readFile("${env.WORKSPACE}/build.env").trim()
-                    return buildEnv.contains("CHANGES_FOUND=true")
-                }
-            }
-            steps {
-                dir('jenkins-test') {
-                    checkout([
-                        $class: 'GitSCM',
-                        branches: ["master"],
-                        doGenerateSubmoduleConfigurations: false,
-                        extensions: [
-                            [$class: 'PathRestriction', includedRegions: 'test-2/.*', excludedRegions: '']
-                        ],
-                        userRemoteConfigs: [[credentialsId: 'Github', url: 'https://github.com/deepanshu-rawat6/jenkins-test-repo']]
-                    ])
-                }
-            }
-        }
-        
+
         stage('Build & Push Image') {
-            when {
-                expression {
-                    def buildEnv = readFile("${env.WORKSPACE}/build.env").trim()
-                    return buildEnv.contains("CHANGES_FOUND=true")
-                }
-            }
             steps {
                 // This stage runs only if there's a change in the Correlation folder
                 sh '''
