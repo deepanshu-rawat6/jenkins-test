@@ -1,16 +1,16 @@
 def hasChangesInFolder(folderPath) {
     script {
-        dir('octo') { 
-            def lastCommit = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
-            def previousCommit = sh(script: "git rev-parse HEAD~1", returnStdout: true).trim()
+        dir("${env.WORKSPACE}") { // Ensure it's checking from repo root
+            def lastCommit = sh(script: "git rev-parse origin/master", returnStdout: true).trim()
+            def previousCommit = sh(script: "git rev-parse origin/master@{1}", returnStdout: true).trim()
 
-            echo "Checking changes from ${previousCommit} to ${lastCommit} in 'octo' repository"
+            echo "Checking changes from ${previousCommit} to ${lastCommit}"
 
             def changedFiles = sh(script: "git diff --name-only ${previousCommit} ${lastCommit}", returnStdout: true).trim()
 
-            echo "Changed files in 'octo': ${changedFiles}"
+            echo "Changed files: ${changedFiles}"
 
-            if (changedFiles.split('\n').find { it.startsWith(folderPath) }) {
+            if (changedFiles.contains(folderPath)) {
                 echo "✅ Changes detected in ${folderPath}. Proceeding with the build..."
                 return true
             } else {
