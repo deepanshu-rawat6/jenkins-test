@@ -49,7 +49,6 @@ pipeline {
                 //     ]
                 // ])
 
-
                         dir('test-1'){
                             script {
                                 properties([pipelineTriggers([pollSCM('* * * * *')])])
